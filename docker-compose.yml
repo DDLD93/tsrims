@@ -1,0 +1,70 @@
+version: '3.8'
+services:
+  gateway:
+    build: ./gateway
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    environment:
+      INCIDENT_SERVICE: ${INCIDENT_SERVICE}
+      NIN_SERVICE: ${NIN_SERVICE}
+      MONGO_URI: ${MONGO_URI}
+      APP_PORT: ${APP_PORT}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      - mongodb  
+    networks:
+      - tsrims-net
+  nin:
+    build: ./nin
+    restart: unless-stopped
+    environment:
+      APP_PORT: ${APP_PORT}
+      MONGO_URI: ${MONGO_URI}
+    networks:
+      - tsrims-net
+  incident:
+    build: ./incident
+    restart: unless-stopped
+    environment:
+      APP_PORT: ${APP_PORT}
+      MONGO_URI: ${MONGO_URI}
+    networks:
+      - tsrims-net
+  mongodb:
+    container_name: mongo_container
+    image: mongo:6.0.2
+    restart: unless-stopped
+    networks:
+      - tsrims-net
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS}
+    volumes:
+      - "$PWD/STORAGE/mongodb:/data/db"    
+  # traefik:
+  #   container_name: traefik
+  #   image: traefik:1.7.6-alpine
+  #   restart: always
+  #   command: --docker
+  #   labels:
+  #     - traefik.frontend.rule=Host:""
+  #     - traefik.port=8080
+  #     - traefik.enable=true
+  #     - traefik.docker.network=tsrims-net
+  #   environment:
+  #     DO_AUTH_TOKEN: "${DO_AUTH_TOKEN}"
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - $PWD/STORAGE/traefik/traefik.toml:/etc/traefik/traefik.toml
+  #     - $PWD/STORAGE/traefik/acme.json:/acme.json
+  #   ports:
+  #     - 80:80
+  #     - 443:443
+  #   networks:   
+  #     - tsrims-net
+ 
+networks:
+  tsrims-net:
+    driver: bridge 
